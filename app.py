@@ -1,8 +1,8 @@
 import os
-from fastapi import FastAPI, Request
+from pathlib import Path
+from fastapi import FastAPI
 from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import anthropic
 from dotenv import load_dotenv
@@ -11,7 +11,8 @@ load_dotenv()
 
 app = FastAPI(title="Gerador de Recurso de Glosa Automático")
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+
+HTML_FILE = Path(__file__).parent / "templates" / "index.html"
 
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
@@ -80,8 +81,8 @@ Gere a carta de recurso completa, incluindo todos os argumentos técnicos, cita�
 
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def index():
+    return HTMLResponse(content=HTML_FILE.read_text(encoding="utf-8"))
 
 
 @app.post("/gerar-recurso")
