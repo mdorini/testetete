@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Recurso de Glosa</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1a56db 0%, #0e3fa6 100%);
+      color: white;
+      padding: 1.5rem 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      font-size: 0.875rem;
+      opacity: 0.85;
+      margin-top: 0.25rem;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      padding: 1.5rem;
+    }
+
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1a56db;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #e8edf5;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #718096;
+      margin: 1rem 0 0.5rem;
+    }
+
+    .section-label:first-of-type { margin-top: 0; }
+
+    .form-group {
+      margin-bottom: 0.75rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 0.3rem;
+    }
+
+    label .required {
+      color: #e53e3e;
+      margin-left: 2px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: #1a202c;
+      background: #fafbfc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #1a56db;
+      box-shadow: 0 0 0 3px rgba(26, 86, 219, 0.12);
+      background: white;
+    }
+
+    textarea {
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .btn-gerar {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(135deg, #1a56db, #0e3fa6);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 1.25rem;
+      transition: opacity 0.2s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-gerar:hover:not(:disabled) {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    .btn-gerar:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Output panel */
+    .output-panel {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .output-panel .card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .output-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+
+    .output-toolbar h2 { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+
+    .btn-copy, .btn-clear {
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background 0.15s;
+    }
+
+    .btn-copy {
+      background: #ebf4ff;
+      color: #1a56db;
+    }
+
+    .btn-copy:hover { background: #bee3f8; }
+
+    .btn-clear {
+      background: #fff5f5;
+      color: #c53030;
+      margin-left: 0.5rem;
+    }
+
+    .btn-clear:hover { background: #fed7d7; }
+
+    .output-area {
+      flex: 1;
+      min-height: 500px;
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 1.25rem;
+      font-family: 'Georgia', serif;
+      font-size: 0.875rem;
+      line-height: 1.8;
+      color: #2d3748;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .output-area.empty::before {
+      content: "A carta de recurso gerada aparecerá aqui...";
+      color: #a0aec0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 0.875rem;
+      font-style: italic;
+    }
+
+    .status-bar {
+      margin-top: 0.75rem;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .status-bar.loading {
+      display: flex;
+      background: #ebf8ff;
+      color: #2b6cb0;
+    }
+
+    .status-bar.success {
+      display: flex;
+      background: #f0fff4;
+      color: #276749;
+    }
+
+    .status-bar.error {
+      display: flex;
+      background: #fff5f5;
+      color: #c53030;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .char-count {
+      font-size: 0.72rem;
+      color: #a0aec0;
+      text-align: right;
+      margin-top: 0.25rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      background: #ebf4ff;
+      color: #1a56db;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #e8edf5;
+      margin: 1rem 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚕️ Gerador de Recurso de Glosa Automático</h1>
+  <p>Preencha os dados da glosa e gere uma carta de recurso técnica com fundamentação em CONITEC, AMB e ANS</p>
+</header>
+
+<div class="container">
+  <!-- Form -->
+  <div>
+    <div class="card">
+      <h2>📋 Dados da Glosa</h2>
+
+      <p class="section-label">Informações do Procedimento</p>
+
+      <div class="form-group row-2">
+        <div>
+          <label>Código TUSS <span class="required">*</span></label>
+          <input type="text" id="codigo_tuss" placeholder="Ex: 40301010" maxlength="20" />
+        </div>
+        <div>
+          <label>Data do Procedimento</label>
+          <input type="date" id="data_procedimento" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nome do Procedimento <span class="required">*</span></label>
+        <input type="text" id="nome_procedimento" placeholder="Ex: Tomografia computadorizada do crânio" />
+      </div>
+
+      <div class="form-group">
+        <label>Motivo da Glosa <span class="required">*</span></label>
+        <input type="text" id="motivo_glosa" placeholder="Ex: Procedimento não autorizado / fora do rol ANS" />
+      </div>
+
+      <div class="divider"></div>
+      <p class="section-label">Fundamentação Clínica</p>
+
+      <div class="form-group">
+        <label>Justificativa Clínica <span class="required">*</span></label>
+        <textarea id="justificativa_clinica" rows="4"
+          placeholder="Descreva a indicação médica, o quadro clínico do paciente, os sintomas, exames prévios e por que o procedimento foi necessário..."></textarea>
+        <div class="char-count" id="char_count">0 caracteres</div>
+      </div>
+
+      <div class="form-group">
+        <label>Documentação e Informações Adicionais</label>
+        <textarea id="documentacao_adicional" rows="3"
+          placeholder="Laudos, exames, relatórios médicos, histórico de tratamento anterior, protocolos seguidos..."></textarea>
+      </div>
+
+      <div class="divider"></div>
+      <p class="section-label">Dados do Médico / Clínica</p>
+
+      <div class="form-group row-2">
+        <div>
+          <label>Nome do Médico Solicitante</label>
+          <input type="text" id="nome_medico" placeholder="Dr(a). Nome Completo" />
+        </div>
+        <div>
+          <label>CRM</label>
+          <input type="text" id="crm_medico" placeholder="Ex: 123456/SP" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Especialidade Médica</label>
+        <input type="text" id="especialidade" placeholder="Ex: Neurologia, Cardiologia, Oncologia..." />
+      </div>
+
+      <div class="divider"></div>
+      <p class="section-label">Dados Administrativos</p>
+
+      <div class="form-group">
+        <label>Nome do Paciente</label>
+        <input type="text" id="nome_paciente" placeholder="Nome completo do beneficiário" />
+      </div>
+
+      <div class="form-group row-2">
+        <div>
+          <label>Operadora de Saúde</label>
+          <input type="text" id="nome_operadora" placeholder="Ex: Unimed, Bradesco Saúde..." />
+        </div>
+        <div>
+          <label>Número da Guia</label>
+          <input type="text" id="numero_guia" placeholder="Ex: 2024001234" />
+        </div>
+      </div>
+
+      <button class="btn-gerar" id="btn_gerar" onclick="gerarRecurso()">
+        <span id="btn_icon">⚡</span>
+        <span id="btn_text">Gerar Carta de Recurso</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-panel">
+    <div class="card">
+      <div class="output-toolbar">
+        <h2>📄 Carta de Recurso</h2>
+        <div>
+          <button class="btn-copy" onclick="copiarTexto()">📋 Copiar</button>
+          <button class="btn-clear" onclick="limparOutput()">✕ Limpar</button>
+        </div>
+      </div>
+
+      <div class="output-area empty" id="output"></div>
+
+      <div class="status-bar" id="status_bar">
+        <div class="spinner" id="spinner"></div>
+        <span id="status_text"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const outputEl = document.getElementById('output');
+  const statusBar = document.getElementById('status_bar');
+  const statusText = document.getElementById('status_text');
+  const spinner = document.getElementById('spinner');
+  const btnGerar = document.getElementById('btn_gerar');
+  const btnText = document.getElementById('btn_text');
+  const btnIcon = document.getElementById('btn_icon');
+
+  // Character counter
+  document.getElementById('justificativa_clinica').addEventListener('input', function() {
+    document.getElementById('char_count').textContent = this.value.length + ' caracteres';
+  });
+
+  function setStatus(type, msg) {
+    statusBar.className = 'status-bar ' + type;
+    statusText.textContent = msg;
+    spinner.style.display = type === 'loading' ? 'block' : 'none';
+  }
+
+  function setLoading(loading) {
+    btnGerar.disabled = loading;
+    btnText.textContent = loading ? 'Gerando recurso...' : 'Gerar Carta de Recurso';
+    btnIcon.textContent = loading ? '⏳' : '⚡';
+  }
+
+  function getVal(id) {
+    return document.getElementById(id).value.trim();
+  }
+
+  async function gerarRecurso() {
+    const codigoTuss = getVal('codigo_tuss');
+    const nomeProcedimento = getVal('nome_procedimento');
+    const motivoGlosa = getVal('motivo_glosa');
+    const justificativaClinical = getVal('justificativa_clinica');
+
+    if (!codigoTuss || !nomeProcedimento || !motivoGlosa || !justificativaClinical) {
+      setStatus('error', 'Preencha os campos obrigatórios: Código TUSS, Procedimento, Motivo da Glosa e Justificativa Clínica.');
+      return;
+    }
+
+    const payload = {
+      codigo_tuss: codigoTuss,
+      nome_procedimento: nomeProcedimento,
+      motivo_glosa: motivoGlosa,
+      justificativa_clinica: justificativaClinical,
+      nome_paciente: getVal('nome_paciente'),
+      nome_medico: getVal('nome_medico'),
+      crm_medico: getVal('crm_medico'),
+      especialidade: getVal('especialidade'),
+      nome_operadora: getVal('nome_operadora'),
+      numero_guia: getVal('numero_guia'),
+      data_procedimento: getVal('data_procedimento'),
+      documentacao_adicional: getVal('documentacao_adicional'),
+    };
+
+    setLoading(true);
+    setStatus('loading', 'Analisando dados e gerando carta de recurso com fundamentação técnica...');
+    outputEl.textContent = '';
+    outputEl.classList.remove('empty');
+
+    try {
+      const response = await fetch('/gerar-recurso', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const err = await response.text();
+        throw new Error(err || 'Erro ao gerar recurso.');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let received = false;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        outputEl.textContent += chunk;
+        outputEl.scrollTop = outputEl.scrollHeight;
+        if (!received) {
+          received = true;
+          setStatus('loading', 'Gerando... (role para acompanhar)');
+        }
+      }
+
+      setStatus('success', '✅ Carta de recurso gerada com sucesso. Revise antes de enviar.');
+    } catch (err) {
+      setStatus('error', '❌ Erro: ' + err.message);
+      if (!outputEl.textContent) outputEl.classList.add('empty');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copiarTexto() {
+    const text = outputEl.textContent;
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      const btn = document.querySelector('.btn-copy');
+      const orig = btn.textContent;
+      btn.textContent = '✅ Copiado!';
+      setTimeout(() => { btn.textContent = orig; }, 2000);
+    } catch {
+      alert('Não foi possível copiar. Selecione o texto manualmente.');
+    }
+  }
+
+  function limparOutput() {
+    outputEl.textContent = '';
+    outputEl.classList.add('empty');
+    statusBar.className = 'status-bar';
+  }
+
+  // Allow Enter on single-line inputs to submit
+  document.querySelectorAll('input').forEach(input => {
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') gerarRecurso();
+    });
+  });
+</script>
+
+</body>
+</html>
